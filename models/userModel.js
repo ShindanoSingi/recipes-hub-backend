@@ -13,16 +13,29 @@ const userSchema = new mongoose.Schema({
         required: false,
         trim: true,
     },
+    name: {
+        type: String,
+        required: false,
+    },
+
+    username: {
+        type: String,
+        trim: true,
+    },
     email: {
         type: String,
-        required: [true, 'Email is required'],
         trim: true,
     },
     password: {
         type: String,
         required: [true, 'Password is required'],
     },
-    photo: {
+    picture: {
+        type: String,
+        required: false
+    },
+
+    accountId: {
         type: String,
         required: false
     },

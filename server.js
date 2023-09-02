@@ -19,62 +19,64 @@ app.use(cors());
 
 const server = require('http').createServer(app);
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-
 passport.use(
   new GoogleStrategy({
-    clientID: GOOGLE_CLIENT_ID,
-    clientSecret: GOOGLE_CLIENT_SECRET,
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackURL: '/google',
   },
-  async function (accessToken, refreshToken, profile, callback) {
-    try{
-       const user = await User.findOne({
-        accountId: profile.id,
-        provider: 'facebook',
-      });
+    async function (accessToken, refreshToken, profile, callback) {
+      console.log('profile', profile)
 
-      if (user === null) {
-        const newUser = new User({
-          name: profile.displayName,
-          email: profile.emails[0].value,
-          picture: profile.photos[0].value,
-          provider: profile.provider,
+      try {
+        const user = await User.findOne({
           accountId: profile.id,
-          firstName: profile.name.givenName,
-          lastName: profile.name.familyName,
-          username: profile.name.givenName,
-        })
+          provider: 'google',
+        });
 
-        await newUser.save()
-        console.log(`Added new user ${profile.displayName}`)
+        if (user === null) {
+          const newUser = new User({
+            name: profile.displayName,
+            email: profile.emails[0].value,
+            picture: profile.photos[0].value,
+            provider: profile.provider,
+            accountId: profile.id,
+            firstName: profile.name.givenName,
+            lastName: profile.name.familyName,
+            username: profile.name.givenName,
+          })
+
+          await newUser.save()
+          console.log(`Added new user ${profile.displayName}`)
+          return callback(null, profile)
+        }
+      } catch (error) {
         return callback(null, profile)
       }
-    }catch (error) {
-        return callback(null, profile)
-      }
-  })),
+    })),
 
   passport.use(
     new FacebookStrategy({
       clientID: process.env.FACEBOOK_CLIENT_ID,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
       callbackURL: process.env.FACEBOOK_CALLBACK_URL,
-      profileFields: ['email', 'displayName', 'name', 'picture']
+      profileFields: ['emails', 'displayName', 'name', 'picture']
     },
 
       async function (accessToken, refreshToken, profile, callback) {
-        try{
-           const user = await User.findOne({
+        console.log('profile', profile)
+        try {
+          const user = await User.findOne({
             accountId: profile.id,
             provider: 'facebook',
           });
 
-          if (user === null) {
+          console.log('user', user)
+
+          if (!user) {
             const newUser = new User({
               name: profile.displayName,
-              email: profile.emails[0].value,
+              // email: profile.emails[0].value,
               picture: profile.photos[0].value,
               provider: profile.provider,
               accountId: profile.id,
@@ -82,37 +84,39 @@ passport.use(
               lastName: profile.name.familyName,
               username: profile.name.givenName,
             })
+            await newUser.save();
+            console.log('newUser', newUser);
 
-            await newUser.save()
-            console.log(`Added new user ${profile.displayName}`)
+
+            // console.log(`Added new user ${profile.displayName}`)
             return callback(null, profile)
           }
-        }catch (error) {
-            return callback(null, profile)
-          }
+        } catch (error) {
+          return callback(null, profile)
+        }
       }))
 
-  passport.serializeUser((user, callback) => {
-        callback(null, user)
-      })
+passport.serializeUser((user, callback) => {
+  callback(null, user)
+})
 
-  passport.deserializeUser((user, callback) => {
-        callback(null, user)
-      })
+passport.deserializeUser((user, callback) => {
+  callback(null, user)
+})
 
-  app.use(expressSession({
-        secret: 'recipeshub',
-        resave: true,
-        saveUninitialized: true,
-      }))
+app.use(expressSession({
+  secret: 'recipeshub',
+  resave: true,
+  saveUninitialized: true,
+}))
 
-  app.use(passport.initialize())
-  app.use(passport.session())
+app.use(passport.initialize())
+app.use(passport.session())
 
-  app.use('/api/users', usersRoute);
+app.use('/api/users', usersRoute);
 
-  // Define routes for login
-  app.get('/login/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+// Define routes for login
+app.get('/login/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 app.get('/login/facebook', passport.authenticate('facebook', { scope: ['email'] }));
 
 app.get('/google', passport.authenticate('google'), (req, res) => {
@@ -125,8 +129,12 @@ app.get('/facebook', passport.authenticate('facebook'), (req, res) => {
 
 // Logout
 app.get('/logout', (req, res) => {
-  req.logout();
-  res.redirect('/');
+  req.logout((err) => {
+    if (err) {
+      console.log(err);
+    }
+    res.redirect('/');
+  })
 });
 
 // Default routes

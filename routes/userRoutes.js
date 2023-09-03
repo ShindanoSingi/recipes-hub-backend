@@ -43,11 +43,11 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     try{
         // Check if user already exists
-        const user = await User.findOne({
+        const userEmailUsername = await User.findOne({
             $or: [{ email: req.body.email }, { username: req.body.username }]
         });
 
-        if(!user) {
+        if(!userEmailUsername) {
             return res.send({
                 message: 'Invalid email or username',
                 success: false
@@ -178,5 +178,7 @@ router.get('/get-all-users', authMiddleware, async (req, res) => {
         });
     }
 });
+
+
 
 module.exports = router;

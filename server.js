@@ -97,41 +97,41 @@ const server = require('http').createServer(app);
         }
       }))
 
-      // passport.use(
-      //   new GitHubStrategy({
-      //   clientID: process.env.GITHUB_CLIENT_ID,
-      //   clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      //   callbackURL: process.env.GITHUB_CALLBACK_URL,
-      // },
-      // async function(accessToken, refreshToken, profile, callback ){
-      //   console.log('profile', profile)
-      //   try {
-      //     const user = await User.findOne({
-      //       accountId: profile.id,
-      //       provider: 'facebook',
-      //     });
+      passport.use(
+        new GitHubStrategy({
+        clientID: process.env.GITHUB_CLIENT_ID,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET,
+        callbackURL: process.env.GITHUB_CALLBACK_URL,
+      },
+      async function(accessToken, refreshToken, profile, callback ){
+        console.log('profile', profile)
+        try {
+          const user = await User.findOne({
+            accountId: profile.id,
+            provider: 'facebook',
+          });
 
-      //     console.log('user', user)
+          console.log('user', user)
 
-      //     if (!user) {
-      //       const newUser = new User({
-      //         name: profile.displayName,
-      //         picture: profile.photos[0].value,
-      //         provider: profile.provider,
-      //         accountId: profile.id,
-      //         firstName: profile.displayName.split(' ')[0],
-      //         lastName: profile.displayName.split(' ')[1],
-      //         username: profile.displayName.split(' ')[0],
-      //       })
-      //       await newUser.save();
-      //       console.log('newUser', newUser);
-      //       return callback(null, profile)
-      //     }
-      //   } catch (error) {
-      //     return callback(null, profile)
-      //   }
-      // }
-      // ))
+          if (!user) {
+            const newUser = new User({
+              name: profile.displayName,
+              picture: profile.photos[0].value,
+              provider: profile.provider,
+              accountId: profile.id,
+              firstName: profile.displayName.split(' ')[0],
+              lastName: profile.displayName.split(' ')[1],
+              username: profile.displayName.split(' ')[0],
+            })
+            await newUser.save();
+            console.log('newUser', newUser);
+            return callback(null, profile)
+          }
+        } catch (error) {
+          return callback(null, profile)
+        }
+      }
+      ))
 
 passport.serializeUser((user, callback) => {
   callback(null, user)
